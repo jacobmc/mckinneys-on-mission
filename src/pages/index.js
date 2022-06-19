@@ -1,122 +1,192 @@
-import * as React from "react"
+import React, { useState } from "react"
 import { Link } from "gatsby"
 import { StaticImage } from "gatsby-plugin-image"
+import styled from "styled-components"
+import ReCAPTCHA from "react-google-recaptcha"
+import addToMailchimp from "gatsby-plugin-mailchimp"
 
 import Layout from "../components/layout"
 import Seo from "../components/seo"
-import * as styles from "../components/index.module.css"
 
-const links = [
-  {
-    text: "Tutorial",
-    url: "https://www.gatsbyjs.com/docs/tutorial",
-    description:
-      "A great place to get started if you're new to web development. Designed to guide you through setting up your first Gatsby site.",
-  },
-  {
-    text: "Examples",
-    url: "https://github.com/gatsbyjs/gatsby/tree/master/examples",
-    description:
-      "A collection of websites ranging from very basic to complex/complete that illustrate how to accomplish specific tasks within your Gatsby sites.",
-  },
-  {
-    text: "Plugin Library",
-    url: "https://www.gatsbyjs.com/plugins",
-    description:
-      "Learn how to add functionality and customize your Gatsby site or app with thousands of plugins built by our amazing developer community.",
-  },
-  {
-    text: "Build and Host",
-    url: "https://www.gatsbyjs.com/cloud",
-    description:
-      "Now you’re ready to show the world! Give your Gatsby site superpowers: Build and host on Gatsby Cloud. Get started for free!",
-  },
-]
+const Container = styled.div`
+  	display: grid;
+  	grid-template-columns: repeat(2, 1fr);
+  	gap: 50px;
+  	background: rgba(255,255,255,0.8);
+	max-width: 1200px;
+  	margin: 0 auto;
+  	padding: 50px 40px;
+  
+  	section:last-child { padding-top: 50px; }
+  	h2 { margin-top: 50px; }
+  
+  	@media (max-width: 900px) {
+	  grid-template-columns: 1fr;
+	  
+	  section:last-child { 
+		padding-top: 0; 
+		
+		h2 { margin-top: 0; }
+	  }
+	}
+`
 
-const samplePageLinks = [
-  {
-    text: "Page 2",
-    url: "page-2",
-    badge: false,
-    description:
-      "A simple example of linking to another page within a Gatsby site",
-  },
-  { text: "TypeScript", url: "using-typescript" },
-  { text: "Server Side Rendering", url: "using-ssr" },
-  { text: "Deferred Static Generation", url: "using-dsg" },
-]
+const Messages = styled.div`
+  		margin-bottom: 15px;
+  
+		p {
+		  margin-bottom: 0;
+		  padding: 5px 10px;
+		  border-radius: 5px;
+		}
+  
+  		.error {
+		  background: rgba(171, 35, 70, 0.8);
+		  color: #fff;
+		}
 
-const moreLinks = [
-  { text: "Join us on Discord", url: "https://gatsby.dev/discord" },
-  {
-    text: "Documentation",
-    url: "https://gatsbyjs.com/docs/",
-  },
-  {
-    text: "Starters",
-    url: "https://gatsbyjs.com/starters/",
-  },
-  {
-    text: "Showcase",
-    url: "https://gatsbyjs.com/showcase/",
-  },
-  {
-    text: "Contributing",
-    url: "https://www.gatsbyjs.com/contributing/",
-  },
-  { text: "Issues", url: "https://github.com/gatsbyjs/gatsby/issues" },
-]
+	    .success {
+		  background: rgba(3, 121, 113, 0.7);
+		  color: #fff;
+	    }
+	`
 
-const utmParameters = `?utm_source=starter&utm_medium=start-page&utm_campaign=default-starter`
+const Form = styled.form`
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 25px;
+  	max-width: 600px;
+  	margin: 0 auto;
+	
+	.field {
+	  label {
+		display: block;
+	  }
+	  
+	  input {
+		display: block;
+		width: 100%;
+	  }
+	  
+	  &.follow-up {
+		display: flex;
+		
+		label {
+		  line-height: 1.35;
+		}
+		
+		input {
+		  width: auto;
+		  margin-top: 5px;
+		  margin-right: 10px;
+		}
+	  }
+	  
+		&.email,
+		&.follow-up,
+		&.recaptcha {
+		  grid-column-start: span 2;
+		}
+	}
 
-const IndexPage = () => (
-  <Layout>
-    <Seo title="Home" />
-    <div className={styles.textCenter}>
-      <StaticImage
-        src="../images/example.png"
-        loading="eager"
-        width={64}
-        quality={95}
-        formats={["auto", "webp", "avif"]}
-        alt=""
-        style={{ marginBottom: `var(--space-3)` }}
-      />
-      <h1>
-        Welcome to <b>Gatsby!</b>
-      </h1>
-      <p className={styles.intro}>
-        <b>Example pages:</b>{" "}
-        {samplePageLinks.map((link, i) => (
-          <React.Fragment key={link.url}>
-            <Link to={link.url}>{link.text}</Link>
-            {i !== samplePageLinks.length - 1 && <> · </>}
-          </React.Fragment>
-        ))}
-        <br />
-        Edit <code>src/pages/index.js</code> to update this page.
-      </p>
-    </div>
-    <ul className={styles.list}>
-      {links.map(link => (
-        <li key={link.url} className={styles.listItem}>
-          <a
-            className={styles.listItemLink}
-            href={`${link.url}${utmParameters}`}
-          >
-            {link.text} ↗
-          </a>
-          <p className={styles.listItemDescription}>{link.description}</p>
-        </li>
-      ))}
-    </ul>
-    {moreLinks.map((link, i) => (
-      <React.Fragment key={link.url}>
-        <a href={`${link.url}${utmParameters}`}>{link.text}</a>
-        {i !== moreLinks.length - 1 && <> · </>}
-      </React.Fragment>
-    ))}
-  </Layout>
-)
+  button {
+	max-width: 150px;
+  }
+`
+
+const IndexPage = () => {
+	const [firstName, setFirstName] = useState(''),
+		[lastName, setLastName] = useState(''),
+		[email, setEmail] = useState(''),
+		[followUp, setFollowUp] = useState(''),
+		recaptchaRef = React.createRef()
+
+	const submitForm = event => {
+		event.preventDefault();
+
+		// Validate that the user completed recaptcha
+		const recaptchaValue = recaptchaRef.current.getValue(),
+			msgContainer = document.getElementById('messages'),
+			errors = [],
+			messages = [],
+			listFields = {
+				FNAME: firstName,
+				LNAME: lastName,
+				FOLLOW_UP: ( followUp ) ? 'Yes' : 'No'
+			}
+
+		if (recaptchaValue === '') {
+			errors.push('Please complete the ReCAPTCHA check.');
+		}
+
+		addToMailchimp(email, listFields)
+			.then(data => {
+				if ( data.result === 'error' ) {
+					errors.push(data.msg)
+				} else {
+					messages.push(data.msg)
+				}
+
+				msgContainer.innerHTML = '';
+
+				if ( messages.length ) {
+					messages.forEach( msg => {
+						let msgP = document.createElement('p')
+						msgP.classList.add('success')
+						msgP.appendChild(document.createTextNode(msg))
+						msgContainer.appendChild(msgP)
+					})
+				}
+
+				if (errors.length) {
+					errors.forEach(error => {
+						let errorP = document.createElement('p')
+						errorP.classList.add('error')
+						errorP.appendChild(document.createTextNode(error))
+						msgContainer.appendChild(errorP)
+					})
+				}
+			})
+	}
+
+	return (
+		<Layout>
+			<Container>
+				<section>
+					<StaticImage src={"../images/mckinney-family.jpeg"} title={"The McKinneys"} alt={"A photo of the McKinney family sitting on a bench."} />
+					<h2>Hey There!</h2>
+					<p>We are Jacob & Shawnda McKinney and we (and our three kids) are heading to Scotland to join in the work God is doing there. We will be working with other MTW (Mission to the World) missionaries to help support the Free Church of Scotland in their vision to plant 30 churches by 2030.</p>
+					<p>If you'd like to keep up with us and what God is doing in our lives and ministry, fill out the form to sign up for our newsletter. If you'd like to meet with us to learn more about our vision and discuss potentially partnering with us in the work we are doing, check the box at the bottom of the form and we will contact you to set something up.</p>
+				</section>
+				<section>
+					<h2>Join Our Newsletter</h2>
+					<Messages id={'messages'} />
+					<Form id={"newsletter-form"	} method={'post'} onSubmit={submitForm}>
+						<div className={'field first-name'}>
+							<label htmlFor={'first-name'}>First Name:</label>
+							<input id={'first-name'} name={'first-name'} type={'text'} value={firstName} onChange={e => setFirstName(e.target.value)} />
+						</div>
+						<div className={'field last-name'}>
+							<label htmlFor={'last-name'}>Last Name:</label>
+							<input id={'last-name'} name={'last-name'} type={'text'} value={lastName} onChange={e => setLastName(e.target.value)} />
+						</div>
+						<div className={'field email'}>
+							<label htmlFor={'email'}>Email (required):</label>
+							<input id={'email'} name={'email'} type={'email'} value={email} onChange={e => setEmail(e.target.value)} required />
+						</div>
+						<div className={'field follow-up'}>
+							<input id={'follow-up'} name={'follow-up'} type={'checkbox'} value={followUp} onClick={e => setFollowUp(e.target.checked)} />
+							<label htmlFor={'follow-up'}>I would like to learn more about your vision and a potential partnership.</label>
+						</div>
+
+						<ReCAPTCHA className={'field recaptcha'} ref={recaptchaRef} sitekey={process.env.GATSBY_RECAPTCHA_SITE_KEY} />
+
+						<button type={'submit'}>Submit</button>
+					</Form>
+				</section>
+			</Container>
+		</Layout>
+	)
+}
 
 export default IndexPage
