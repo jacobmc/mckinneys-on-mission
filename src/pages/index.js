@@ -72,6 +72,7 @@ const Form = styled.form`
 		display: flex;
 		
 		label {
+		  flex: 2;
 		  line-height: 1.35;
 		}
 		
@@ -79,6 +80,11 @@ const Form = styled.form`
 		  width: auto;
 		  margin-top: 5px;
 		  margin-right: 10px;
+		  
+		  @media (max-width: 900px) {
+			min-width: 25px;
+			min-height: 25px;
+		  }
 		}
 	  }
 	  
@@ -119,34 +125,44 @@ const IndexPage = () => {
 			errors.push('Please complete the ReCAPTCHA check.');
 		}
 
-		addToMailchimp(email, listFields)
-			.then(data => {
-				if ( data.result === 'error' ) {
-					errors.push(data.msg)
-				} else {
-					messages.push(data.msg)
-				}
-
-				msgContainer.innerHTML = '';
-
-				if ( messages.length ) {
-					messages.forEach( msg => {
-						let msgP = document.createElement('p')
-						msgP.classList.add('success')
-						msgP.appendChild(document.createTextNode(msg))
-						msgContainer.appendChild(msgP)
-					})
-				}
-
-				if (errors.length) {
-					errors.forEach(error => {
-						let errorP = document.createElement('p')
-						errorP.classList.add('error')
-						errorP.appendChild(document.createTextNode(error))
-						msgContainer.appendChild(errorP)
-					})
-				}
+		if (errors.length) {
+			errors.forEach(error => {
+				let errorP = document.createElement('p')
+				errorP.classList.add('error')
+				errorP.appendChild(document.createTextNode(error))
+				msgContainer.appendChild(errorP)
 			})
+		} else {
+			addToMailchimp(email, listFields)
+				.then(data => {
+					if ( data.result === 'error' ) {
+						errors.push(data.msg)
+					} else {
+						messages.push(data.msg)
+					}
+
+					msgContainer.innerHTML = '';
+
+					if ( messages.length ) {
+						messages.forEach( msg => {
+							let msgP = document.createElement('p')
+							msgP.classList.add('success')
+							msgP.appendChild(document.createTextNode(msg))
+							msgContainer.appendChild(msgP)
+						})
+					}
+
+					if (errors.length) {
+						errors.forEach(error => {
+							let errorP = document.createElement('p')
+							errorP.classList.add('error')
+							errorP.appendChild(document.createTextNode(error))
+							msgContainer.appendChild(errorP)
+						})
+					}
+				})
+		}
+
 	}
 
 	return (
