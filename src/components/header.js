@@ -1,6 +1,12 @@
 import * as React from "react"
 import PropTypes from "prop-types"
+import { init, trackPages } from "insights-js"
 import { Link } from "gatsby"
+
+if ( typeof window !== 'undefined' && window.location.href.includes('localhost') ) {
+    init('eDtLwgMMjXU9oyW9')
+    trackPages()
+}
 
 const Header = ({ siteTitle }) => (
   <header
