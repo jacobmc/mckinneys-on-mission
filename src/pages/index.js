@@ -4,6 +4,7 @@ import { StaticImage } from "gatsby-plugin-image"
 import styled from "styled-components"
 import ReCAPTCHA from "react-google-recaptcha"
 import addToMailchimp from "gatsby-plugin-mailchimp"
+import { track, parameters } from "insights-js"
 
 import Layout from "../components/layout"
 import Seo from "../components/seo"
@@ -139,6 +140,18 @@ const IndexPage = () => {
 						errors.push(data.msg)
 					} else {
 						messages.push(data.msg)
+						if ( typeof window !== 'undefined' && window.location.href.includes('localhost') ) {
+							track({
+								id: "user-subscribed",
+								unique: true,
+								parameters: {
+									locale: parameters.locale(),
+									screenSize: parameters.screenType(),
+									referrer: parameters.referrer(),
+									followUp: followUp
+								}
+							})
+						}
 					}
 
 					msgContainer.innerHTML = '';
